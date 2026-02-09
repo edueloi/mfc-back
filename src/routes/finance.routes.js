@@ -17,29 +17,45 @@ router.get('/event-sales', async (req, res) => {
 router.post('/event-sales', async (req, res) => {
   const data = req.body || {};
   const id = uuid();
-  const ts = nowIso();
   await db.prepare(`
-    INSERT INTO event_sales (id, event_id, member_id, quantity, unit_price, total_value, date, created_at)
+    INSERT INTO event_sales (id, event_id, team_id, member_id, buyer_name, amount, status, date)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, data.eventId, data.memberId, data.quantity || 1, data.unitPrice || 0, data.totalValue || 0, data.date || ts, ts);
+  `).run(
+    id, 
+    data.eventId, 
+    data.teamId, 
+    data.memberId, 
+    data.buyerName || '', 
+    data.amount || 0, 
+    data.status || 'PAGO', 
+    data.date
+  );
   const row = await db.prepare('SELECT * FROM event_sales WHERE id = ?').get(id);
   res.status(201).json(rowToEventSale(row));
 });
 
 // Pagamentos de mensalidade
 router.get('/payments', async (req, res) => {
-  const rows = await db.prepare('SELECT * FROM payments ORDER BY year DESC, month DESC').all();
+  const rows = await db.prepare('SELECT * FROM payments ORDER BY date DESC').all();
   res.json(rows.map(rowToPayment));
 });
 
 router.post('/payments', async (req, res) => {
   const data = req.body || {};
   const id = uuid();
-  const ts = nowIso();
   await db.prepare(`
-    INSERT INTO payments (id, member_id, month, year, value, payment_date, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, data.memberId, data.month, data.year, data.value || 0, data.paymentDate || ts, ts);
+    INSERT INTO payments (id, member_id, team_id, amount, date, reference_month, status, launched_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    id, 
+    data.memberId, 
+    data.teamId, 
+    data.amount || 0, 
+    data.date, 
+    data.referenceMonth, 
+    data.status || 'PAGO', 
+    data.launchedBy || null_entries
+  );
   const row = await db.prepare('SELECT * FROM payments WHERE id = ?').get(id);
   res.status(201).json(rowToPayment(row));
 });
@@ -53,54 +69,51 @@ router.get('/ledger', async (req, res) => {
 router.post('/ledger', async (req, res) => {
   const data = req.body || {};
   const id = uuid();
-  const ts = nowIso();
   await db.prepare(`
-    INSERT INTO ledger (id, description, value, type, category, entity_id, event_id, date, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO ledger_entries (id, team_id, type, description, amount, date, category, created_by)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
-    data.description || '',
-    data.value || 0,
+    data.teamId || null,
     data.type,
-    data.category || '',
-    data.entityId || null,
-    data.eventId || null,
-    data.date || ts,
-    ts
+    data.description || '',
+    data.amount || 0,
+    data.date,
+    data.category || null,
+    data.createdBy || null
   );
-  const row = await db.prepare('SELECT * FROM ledger WHERE id = ?').get(id);
+  const row = await db.prepare('SELECT * FROM ledger_entries WHERE id = ?').get(id);
   res.status(201).json(rowToLedger(row));
 });
 
-// Entidades do livro-caixa
+// Entidades financeiras
 router.get('/ledger-entities', async (req, res) => {
-  const rows = await db.prepare('SELECT * FROM ledger_entities ORDER BY name').all();
+  const rows = await db.prepare('SELECT * FROM financial_entities ORDER BY name').all();
   res.json(rows.map(rowToLedgerEntity));
 });
 
 router.post('/ledger-entities', async (req, res) => {
   const data = req.body || {};
-  if (!data.name || !data.type) return res.status(400).json({ error: 'Dados obrigatorios.' });
+  if (!data.name || !data.year) return res.status(400).json({ error: 'Dados obrigatorios.' });
   const id = uuid();
-  const ts = nowIso();
-  await db.prepare('INSERT INTO ledger_entities (id, name, type, created_at) VALUES (?, ?, ?, ?)')
-    .run(id, data.name, data.type, ts);
-  const row = await db.prepare('SELECT * FROM ledger_entities WHERE id = ?').get(id);
+  await db.prepare('INSERT INTO financial_entities (id, name, year, created_by, observations, initial_balance) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(id, data.name, data.year, data.createdBy || null, data.observations || null, data.initialBalance || 0);
+  const row = await db.prepare('SELECT * FROM financial_entities WHERE id = ?').get(id);
   res.status(201).json(rowToLedgerEntity(row));
 });
 
 router.put('/ledger-entities/:id', async (req, res) => {
   const { id } = req.params;
   const data = req.body || {};
-  await db.prepare('UPDATE ledger_entities SET name = ?, type = ? WHERE id = ?')
-    .run(data.name, data.type, id);
-  const row = await db.prepare('SELECT * FROM ledger_entities WHERE id = ?').get(id);
+  await db.prepare('UPDATE financial_entities SET name = ?, year = ?, observations = ?, initial_balance = ? WHERE id = ?')
+    .run(data.name, data.year, data.observations || null, data.initialBalance || 0, id);
+  const row = await db.prepare('SELECT * FROM financial_entities WHERE id = ?').get(id);
   res.json(rowToLedgerEntity(row));
 });
 
 router.delete('/ledger-entities/:id', async (req, res) => {
   const { id } = req.params;
-  await db.prepare('DELETE FROM ledger_entities WHERE id = ?').run(id);
+  await db.prepare('DELETE FROM financial_entities WHERE id = ?').run(id);
   res.status(204).end();
 });
 

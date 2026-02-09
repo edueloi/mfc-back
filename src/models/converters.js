@@ -83,54 +83,58 @@ const rowToEvent = (row) => ({
   id: row.id,
   name: row.name,
   date: row.date,
-  costValue: row.cost_value || 0,
-  goalValue: row.goal_value || 0,
+  costValue: parseFloat(row.cost_value) || 0,
+  goalValue: parseFloat(row.goal_value) || 0,
   cityId: row.city_id,
   isActive: toBool(row.is_active),
   showOnDashboard: toBool(row.show_on_dashboard),
   ticketQuantity: row.ticket_quantity || null,
-  ticketValue: row.ticket_value || null,
-  createdAt: row.created_at
+  ticketValue: parseFloat(row.ticket_value) || null,
+  location: row.location || '',
+  description: row.description || '',
+  responsible: row.responsible || ''
 });
 
 const rowToEventSale = (row) => ({
   id: row.id,
   eventId: row.event_id,
+  teamId: row.team_id,
   memberId: row.member_id,
-  quantity: row.quantity,
-  unitPrice: row.unit_price,
-  totalValue: row.total_value,
-  date: row.date,
-  createdAt: row.created_at
+  buyerName: row.buyer_name,
+  amount: parseFloat(row.amount) || 0,
+  status: row.status,
+  date: row.date
 });
 
 const rowToPayment = (row) => ({
   id: row.id,
   memberId: row.member_id,
-  month: row.month,
-  year: row.year,
-  value: row.value,
-  paymentDate: row.payment_date,
-  createdAt: row.created_at
+  teamId: row.team_id,
+  amount: parseFloat(row.amount) || 0,
+  date: row.date,
+  referenceMonth: row.reference_month,
+  status: row.status,
+  launchedBy: row.launched_by || null
 });
 
 const rowToLedger = (row) => ({
   id: row.id,
-  description: row.description,
-  value: row.value,
+  teamId: row.team_id || null,
   type: row.type,
-  category: row.category,
-  entityId: row.entity_id || null,
-  eventId: row.event_id || null,
+  description: row.description || '',
+  amount: parseFloat(row.amount) || 0,
   date: row.date,
-  createdAt: row.created_at
+  category: row.category || null,
+  createdBy: row.created_by || null
 });
 
 const rowToLedgerEntity = (row) => ({
   id: row.id,
   name: row.name,
-  type: row.type,
-  createdAt: row.created_at
+  year: row.year,
+  createdBy: row.created_by || null,
+  observations: row.observations || null,
+  initialBalance: parseFloat(row.initial_balance) || 0
 });
 
 module.exports = {
