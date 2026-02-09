@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS members (
   religion VARCHAR(100),
   education VARCHAR(100),
   movement_roles TEXT,
+  photo_url TEXT,
   created_at DATETIME NOT NULL,
   updated_at DATETIME NOT NULL,
   is_payment_inactive TINYINT(1) DEFAULT 0,

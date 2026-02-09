@@ -72,6 +72,7 @@ const rowToMember = (row) => ({
   profession: row.profession || '',
   religion: row.religion || '',
   education: row.education || '',
+  photoUrl: row.photo_url || '',
   movementRoles: row.movement_roles ? JSON.parse(row.movement_roles) : [],
   isPaymentInactive: toBool(row.is_payment_inactive),
   createdAt: row.created_at,

@@ -25,14 +25,14 @@ router.post('/', async (req, res) => {
         status, team_id, street, number, neighborhood, zip, complement, city, state,
         condir, naturalness, father, mother, smoker, mobility_issue, health_plan, diet,
         medication, allergy, pcd, pcd_description, profession, religion, education,
-        movement_roles, created_at, updated_at, is_payment_inactive
+        photo_url, movement_roles, created_at, updated_at, is_payment_inactive
       ) VALUES (
         @id, @name, @nickname, @dob, @rg, @cpf, @bloodType, @gender, @maritalStatus,
         @spouseName, @spouseCpf, @marriageDate, @mfcDate, @phone, @emergencyPhone,
         @status, @teamId, @street, @number, @neighborhood, @zip, @complement, @city, @state,
         @condir, @naturalness, @father, @mother, @smoker, @mobilityIssue, @healthPlan, @diet,
         @medication, @allergy, @pcd, @pcdDescription, @profession, @religion, @education,
-        @movementRoles, @createdAt, @updatedAt, @isPaymentInactive
+        @photoUrl, @movementRoles, @createdAt, @updatedAt, @isPaymentInactive
       )
     `);
 
@@ -76,6 +76,7 @@ router.post('/', async (req, res) => {
       profession: data.profession || '',
       religion: data.religion || '',
       education: data.education || '',
+      photoUrl: data.photoUrl || '',
       movementRoles: JSON.stringify(data.movementRoles || []),
       createdAt: ts,
       updatedAt: ts,
@@ -134,6 +135,7 @@ router.put('/:id', async (req, res) => {
       profession = @profession,
       religion = @religion,
       education = @education,
+      photo_url = @photoUrl,
       movement_roles = @movementRoles,
       updated_at = @updatedAt,
       is_payment_inactive = @isPaymentInactive
@@ -178,6 +180,7 @@ router.put('/:id', async (req, res) => {
     profession: data.profession || '',
     religion: data.religion || '',
     education: data.education || '',
+    photoUrl: data.photoUrl || '',
     movementRoles: JSON.stringify(data.movementRoles || []),
     updatedAt: ts,
     isPaymentInactive: toInt(data.isPaymentInactive)
