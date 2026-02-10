@@ -36,6 +36,9 @@ router.post('/', async (req, res) => {
       )
     `);
 
+    // Se está vinculando a uma equipe, status automaticamente vira "Ativo"
+    const finalStatus = data.teamId ? 'Ativo' : (data.status || 'Aguardando');
+
     await stmt.run({
       id,
       name: data.name || '',
@@ -52,7 +55,7 @@ router.post('/', async (req, res) => {
       mfcDate: data.mfcDate || '',
       phone: data.phone || '',
       emergencyPhone: data.emergencyPhone || '',
-      status: data.status || '',
+      status: finalStatus,
       teamId: data.teamId || null,
       street: data.street || '',
       number: data.number || '',
@@ -95,6 +98,16 @@ router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const data = req.body || {};
   const ts = nowIso();
+  
+  // Se está vinculando a uma equipe, status automaticamente vira "Ativo"
+  // Se está removendo da equipe (teamId null/undefined), status vira "Aguardando"
+  let finalStatus = data.status;
+  if (data.teamId) {
+    finalStatus = 'Ativo';
+  } else if (data.hasOwnProperty('teamId') && !data.teamId && !data.status) {
+    finalStatus = 'Aguardando';
+  }
+  
   await db.prepare(`
     UPDATE members SET
       name = @name,
@@ -156,7 +169,7 @@ router.put('/:id', async (req, res) => {
     mfcDate: data.mfcDate || '',
     phone: data.phone || '',
     emergencyPhone: data.emergencyPhone || '',
-    status: data.status || '',
+    status: finalStatus,
     teamId: data.teamId || null,
     street: data.street || '',
     number: data.number || '',

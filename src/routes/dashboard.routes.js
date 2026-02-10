@@ -8,9 +8,11 @@ const router = express.Router();
 
 router.get('/summary', async (req, res) => {
   const { month, year } = req.query;
+  const refMonth = `${month}/${year}`; // Formato MM/YYYY
   
   const members = await db.prepare('SELECT * FROM members').all();
-  const payments = await db.prepare('SELECT * FROM payments WHERE month = ? AND year = ?').all(month, year);
+  const teams = await db.prepare('SELECT * FROM teams').all();
+  const payments = await db.prepare('SELECT * FROM payments WHERE reference_month = ?').all(refMonth);
   const events = await db.prepare('SELECT * FROM events WHERE is_active = 1 AND show_on_dashboard = 1').all();
 
   const totalMembers = members.length;
@@ -20,34 +22,76 @@ router.get('/summary', async (req, res) => {
     return joined.getMonth() + 1 === parseInt(month) && joined.getFullYear() === parseInt(year);
   }).length;
 
-  const totalPayments = payments.reduce((sum, p) => sum + (p.value || 0), 0);
+  const totalPayments = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
   const paidMembers = payments.length;
   const pendingMembers = activeMembers - paidMembers;
 
-  const ageGroups = { crianca: 0, jovem: 0, adulto: 0, idoso: 0 };
+  // Contagem por faixa etária
+  let children = 0, youth = 0, adult = 0, elderly = 0;
+  let male = 0, female = 0;
+  
   members.forEach(m => {
     const age = calcYears(m.dob);
-    if (age <= 12) ageGroups.crianca++;
-    else if (age <= 18) ageGroups.jovem++;
-    else if (age < 60) ageGroups.adulto++;
-    else ageGroups.idoso++;
+    if (age <= 12) children++;
+    else if (age <= 18) youth++;
+    else if (age < 60) adult++;
+    else elderly++;
+    
+    if (m.gender === 'Masculino') male++;
+    else if (m.gender === 'Feminino') female++;
   });
 
-  const eventsSummary = events.map(e => ({
-    id: e.id,
-    name: e.name,
-    date: e.date,
-    goalValue: e.goal_value,
-    costValue: e.cost_value,
-    ticketQuantity: e.ticket_quantity,
-    ticketValue: e.ticket_value
-  }));
+  // Dados por equipe para o gráfico de barras
+  const barData = teams.map(team => {
+    const teamMembers = members.filter(m => m.team_id === team.id);
+    const teamPayments = payments.filter(p => p.team_id === team.id);
+    const paidCount = teamPayments.length;
+    const pendingCount = teamMembers.filter(m => m.status === 'Ativo').length - paidCount;
+    
+    return {
+      id: team.id,
+      name: team.name,
+      paid: paidCount,
+      pending: pendingCount,
+      total: teamMembers.length
+    };
+  });
+
+  // Dados de tendência (últimos 6 meses)
+  const trendData = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(parseInt(year), parseInt(month) - 1 - i, 1);
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const y = String(d.getFullYear());
+    const ref = `${m}/${y}`;
+    const monthPayments = await db.prepare('SELECT * FROM payments WHERE reference_month = ?').all(ref);
+    trendData.push({
+      month: `${m}/${y}`,
+      value: monthPayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0)
+    });
+  }
+
+  // Dados do gráfico de pizza (distribuição por gênero)
+  const pieData = [
+    { name: 'Masculino', value: male },
+    { name: 'Feminino', value: female }
+  ];
 
   res.json({
-    members: { total: totalMembers, active: activeMembers, new: newMembers },
-    payments: { total: totalPayments, paid: paidMembers, pending: pendingMembers },
-    ageGroups,
-    events: eventsSummary
+    stats: {
+      totalMembers,
+      teamsCount: teams.length,
+      activeMembers,
+      children,
+      youth,
+      adult,
+      elderly,
+      male,
+      female
+    },
+    barData,
+    trendData,
+    pieData
   });
 });
 
