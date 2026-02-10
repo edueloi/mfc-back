@@ -25,14 +25,14 @@ router.post('/', async (req, res) => {
         status, team_id, street, number, neighborhood, zip, complement, city, state,
         condir, naturalness, father, mother, smoker, mobility_issue, health_plan, diet,
         medication, allergy, pcd, pcd_description, profession, religion, education,
-        photo_url, movement_roles, created_at, updated_at, is_payment_inactive
+        photo_url, movement_roles, family_name, relationship_type, pays_monthly, created_at, updated_at, is_payment_inactive
       ) VALUES (
         @id, @name, @nickname, @dob, @rg, @cpf, @bloodType, @gender, @maritalStatus,
         @spouseName, @spouseCpf, @marriageDate, @mfcDate, @phone, @emergencyPhone,
         @status, @teamId, @street, @number, @neighborhood, @zip, @complement, @city, @state,
         @condir, @naturalness, @father, @mother, @smoker, @mobilityIssue, @healthPlan, @diet,
         @medication, @allergy, @pcd, @pcdDescription, @profession, @religion, @education,
-        @photoUrl, @movementRoles, @createdAt, @updatedAt, @isPaymentInactive
+        @photoUrl, @movementRoles, @familyName, @relationshipType, @paysMonthly, @createdAt, @updatedAt, @isPaymentInactive
       )
     `);
 
@@ -81,6 +81,9 @@ router.post('/', async (req, res) => {
       education: data.education || '',
       photoUrl: data.photoUrl || '',
       movementRoles: JSON.stringify(data.movementRoles || []),
+      familyName: data.familyName || '',
+      relationshipType: data.relationshipType || 'Titular',
+      paysMonthly: toInt(data.paysMonthly !== false),
       createdAt: ts,
       updatedAt: ts,
       isPaymentInactive: toInt(data.isPaymentInactive)
@@ -150,6 +153,9 @@ router.put('/:id', async (req, res) => {
       education = @education,
       photo_url = @photoUrl,
       movement_roles = @movementRoles,
+      family_name = @familyName,
+      relationship_type = @relationshipType,
+      pays_monthly = @paysMonthly,
       updated_at = @updatedAt,
       is_payment_inactive = @isPaymentInactive
     WHERE id = @id
@@ -195,6 +201,9 @@ router.put('/:id', async (req, res) => {
     education: data.education || '',
     photoUrl: data.photoUrl || '',
     movementRoles: JSON.stringify(data.movementRoles || []),
+    familyName: data.familyName || '',
+    relationshipType: data.relationshipType || 'Titular',
+    paysMonthly: toInt(data.paysMonthly !== false),
     updatedAt: ts,
     isPaymentInactive: toInt(data.isPaymentInactive)
   });
