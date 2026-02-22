@@ -4,7 +4,7 @@ const express = require('express');
 const { v4: uuid } = require('uuid');
 const { db } = require('../db-mysql');
 const { rowToEvent } = require('../models/converters');
-const { nowIso, toInt } = require('../utils/helpers');
+const { toInt } = require('../utils/helpers');
 
 const router = express.Router();
 
@@ -42,12 +42,14 @@ router.post('/', async (req, res) => {
     return res.status(400).json({ error: 'Dados obrigatorios.' });
   }
   const id = uuid();
-  const ts = nowIso();
+  const isActive = data.isActive === undefined ? 1 : toInt(data.isActive);
+  const showOnDashboard = data.showOnDashboard === undefined ? 1 : toInt(data.showOnDashboard);
+
   await db.prepare(`
     INSERT INTO events (
       id, name, date, cost_value, goal_value, city_id, is_active,
-      show_on_dashboard, ticket_quantity, ticket_value, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      show_on_dashboard, ticket_quantity, ticket_value
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     data.name,
@@ -55,11 +57,10 @@ router.post('/', async (req, res) => {
     data.costValue || 0,
     data.goalValue || 0,
     data.cityId,
-    toInt(data.isActive),
-    toInt(data.showOnDashboard),
+    isActive,
+    showOnDashboard,
     data.ticketQuantity || null,
-    data.ticketValue || null,
-    ts
+    data.ticketValue || null
   );
 
   const expenses = Array.isArray(data.expenses) ? data.expenses : [];
@@ -70,9 +71,9 @@ router.post('/', async (req, res) => {
     await expStmt.run(uuid(), id, exp.description || '', exp.amount || 0);
   }
 
-  const quotaStmt = await db.prepare('INSERT INTO event_team_quotas (event_id, team_id, quota_value) VALUES (?, ?, ?)');
+  const quotaStmt = await db.prepare('INSERT INTO event_team_quotas (id, event_id, team_id, quota_value) VALUES (?, ?, ?, ?)');
   for (const q of teamQuotas) {
-    await quotaStmt.run(id, q.teamId, q.quotaValue || 0);
+    await quotaStmt.run(uuid(), id, q.teamId, q.quotaValue || 0);
   }
 
   const row = await db.prepare('SELECT * FROM events WHERE id = ?').get(id);
@@ -82,6 +83,9 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
   const data = req.body || {};
+  const isActive = data.isActive === undefined ? 1 : toInt(data.isActive);
+  const showOnDashboard = data.showOnDashboard === undefined ? 1 : toInt(data.showOnDashboard);
+
   await db.prepare(`
     UPDATE events SET
       name = ?,
@@ -100,8 +104,8 @@ router.put('/:id', async (req, res) => {
     data.costValue || 0,
     data.goalValue || 0,
     data.cityId,
-    toInt(data.isActive),
-    toInt(data.showOnDashboard),
+    isActive,
+    showOnDashboard,
     data.ticketQuantity || null,
     data.ticketValue || null,
     id
@@ -118,9 +122,9 @@ router.put('/:id', async (req, res) => {
     await expStmt.run(uuid(), id, exp.description || '', exp.amount || 0);
   }
 
-  const quotaStmt = await db.prepare('INSERT INTO event_team_quotas (event_id, team_id, quota_value) VALUES (?, ?, ?)');
+  const quotaStmt = await db.prepare('INSERT INTO event_team_quotas (id, event_id, team_id, quota_value) VALUES (?, ?, ?, ?)');
   for (const q of teamQuotas) {
-    await quotaStmt.run(id, q.teamId, q.quotaValue || 0);
+    await quotaStmt.run(uuid(), id, q.teamId, q.quotaValue || 0);
   }
 
   const row = await db.prepare('SELECT * FROM events WHERE id = ?').get(id);

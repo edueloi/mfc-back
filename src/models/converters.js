@@ -117,7 +117,9 @@ const rowToPayment = (row) => ({
   date: row.date,
   referenceMonth: row.reference_month,
   status: row.status,
-  launchedBy: row.launched_by || null
+  launchedBy: row.launched_by || null,
+  memberName: row.member_name || '',
+  familyName: row.family_name || ''
 });
 
 const rowToLedger = (row) => ({

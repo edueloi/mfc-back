@@ -36,7 +36,12 @@ router.post('/event-sales', async (req, res) => {
 
 // Pagamentos de mensalidade
 router.get('/payments', async (req, res) => {
-  const rows = await db.prepare('SELECT * FROM payments ORDER BY date DESC').all();
+  const rows = await db.prepare(`
+    SELECT p.*, m.name as member_name, m.family_name
+    FROM payments p
+    LEFT JOIN members m ON p.member_id = m.id
+    ORDER BY p.date DESC
+  `).all();
   res.json(rows.map(rowToPayment));
 });
 

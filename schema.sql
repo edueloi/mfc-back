@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS events (
   show_on_dashboard TINYINT(1) DEFAULT 1,
   ticket_quantity INT,
   ticket_value DECIMAL(10,2),
+  created_at DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
   location VARCHAR(255),
   description TEXT,
   responsible VARCHAR(255),
@@ -197,3 +198,4 @@ CREATE TABLE IF NOT EXISTS financial_config (
 -- Inserir configuração padrão (se não existir)
 INSERT IGNORE INTO financial_config (id, monthly_payment_amount, event_ticket_default_value, currency, updated_at) 
 VALUES (1, 50.00, 100.00, 'BRL', NOW());
+
