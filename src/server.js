@@ -19,6 +19,7 @@ const financeRoutes = require('./routes/finance.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
 const externalRoutes = require('./routes/external.routes');
 const configRoutes = require('./routes/config.routes');
+const dailyEntriesRoutes = require('./routes/daily-entries.routes');
 
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/events', eventsRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/config', configRoutes);
 app.use('/api', externalRoutes);
+app.use('/daily-entries', dailyEntriesRoutes);
 
 // Rotas de finanças (reutiliza o mesmo router para múltiplos endpoints)
 app.use('/', financeRoutes);

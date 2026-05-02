@@ -195,6 +195,19 @@ CREATE TABLE IF NOT EXISTS financial_config (
   updated_by VARCHAR(36)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Tabela de Lançamentos Diários (Importados de Planilha)
+CREATE TABLE IF NOT EXISTS mfc_daily_entries (
+  id VARCHAR(36) PRIMARY KEY,
+  date DATE NOT NULL,
+  cost_center VARCHAR(100),
+  synthetic VARCHAR(255),
+  analytic VARCHAR(255),
+  amount DECIMAL(10,2) NOT NULL,
+  account VARCHAR(100),
+  observation TEXT,
+  imported_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Inserir configuração padrão (se não existir)
 INSERT IGNORE INTO financial_config (id, monthly_payment_amount, event_ticket_default_value, currency, updated_at) 
 VALUES (1, 50.00, 100.00, 'BRL', NOW());
